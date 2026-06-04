@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经期运动智能助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        /* 顶部导航 */
+        .header {
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            color: white;
+            padding: 40px 20px 20px;
+            border-radius: 0 0 24px 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* 标签页导航 */
+        .tabs {
+            display: flex;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 4px;
+            margin-top: 16px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 13px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: white;
+            color: #ec4899;
+            font-weight: 600;
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid #fce7f3;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: linear-gradient(180deg, #ec4899 0%, #f472b6 100%);
+            border-radius: 2px;
+        }
+
+        /* 周期阶段显示 */
+        .phase-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .phase-menstrual {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .phase-follicular {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .phase-ovulation {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .phase-luteal {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .phase-info {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #6b7280;
+        }
+
+        .phase-info strong {
+            color: #374151;
+        }
+
+        /* 日历样式 */
+        .calendar {
+            margin-top: 12px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .calendar-nav {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f9fafb;
+            border: none;
+            font-size: 18px;
+            color: #6b7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .calendar-nav:hover {
+            background: #f3f4f6;
+        }
+
+        .calendar-month {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .weekday {
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            padding: 8px 0;
+        }
+
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .day:hover {
+            background: #fce7f3;
+        }
+
+        .day.selected {
+            background: #ec4899;
+            color: white;
+        }
+
+        .day.range-start {
+            border-radius: 50% 0 0 50%;
+        }
+
+        .day.range-end {
+            border-radius: 0 50% 50% 0;
+        }
+
+        .day.in-range {
+            background: #fbcfe8;
+            color: #ec4899;
+            border-radius: 0;
+        }
+
+        .day.other-month {
+            color: #d1d5db;
+        }
+
+        .day.today {
+            border-color: #ec4899;
+        }
+
+        .period-notice {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        /* AI助手 */
+        .api-key-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background: #f9fafb;
+        }
+
+        .api-key-input:focus {
+            outline: none;
+            border-color: #ec4899;
+            background: #fff;
+        }
+
+        .phase-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background: #fff;
+            color: #374151;
+        }
+
+        .phase-select:focus {
+            outline: none;
+            border-color: #ec4899;
+        }
+
+        .symptoms-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            background: #f9fafb;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .symptoms-input:focus {
+            outline: none;
+            border-color: #ec4899;
+            background: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .ai-result {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #374151;
+            white-space: pre-wrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #ec4899;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #dc2626;
+        }
+
+        /* 运动库 */
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .exercise-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #fce7f3;
+        }
+
+        .exercise-image {
+            height: 100px;
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .exercise-image img {
+            width: 60px;
+            height: 60px;
+            opacity: 0.8;
+        }
+
+        .exercise-info {
+            padding: 12px;
+        }
+
+        .exercise-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .exercise-desc {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .exercise-phase {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 10px;
+            margin-top: 8px;
+        }
+
+        /* 积分商城 */
+        .points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .points-balance {
+            font-size: 24px;
+            font-weight: 700;
+            color: #d97706;
+        }
+
+        .points-label {
+            font-size: 13px;
+            color: #b45309;
+        }
+
+        .sign-btn {
+            background: #d97706;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sign-btn:hover {
+            background: #b45309;
+        }
+
+        .sign-btn.disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .sign-info {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .shop-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .shop-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #fce7f3;
+            text-align: center;
+        }
+
+        .shop-item-image {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 8px;
+            background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shop-item-image img {
+            width: 36px;
+            height: 36px;
+            opacity: 0.8;
+        }
+
+        .shop-item-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .shop-item-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ec4899;
+            margin-bottom: 8px;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ec4899;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ec4899;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .buy-btn:hover:not(:disabled) {
+            background: #ec4899;
+            color: white;
+        }
+
+        .buy-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 隐私说明 */
+        .privacy-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .privacy-card .card-title::before {
+            background: linear-gradient(180deg, #10b981 0%, #34d399 100%);
+        }
+
+        .privacy-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #059669;
+        }
+
+        /* 首次登录弹窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 32px;
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .modal-content p {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 24px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #ec4899;
+        }
+
+        .modal-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            display: flex;
+            padding: 12px 0;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            color: #9ca3af;
+            transition: all 0.3s;
+        }
+
+        .nav-item.active {
+            color: #ec4899;
+        }
+
+        .nav-item-icon {
+            font-size: 22px;
+        }
+
+        .nav-item-text {
+            font-size: 11px;
+        }
+
+        /* 成功提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* 响应式 */
+        @media (max-width: 480px) {
+            .app-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 首次登录弹窗 -->
+        <div id="welcomeModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <div style="width: 80px; height: 80px; margin: 0 auto 20px; background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px;">🌸</div>
+                <h2>欢迎来到经期运动助手</h2>
+                <p>请输入您的昵称，开始使用</p>
+                <input type="text" id="nicknameInput" class="modal-input" placeholder="请输入昵称" maxlength="20">
+                <button class="modal-btn" onclick="saveNickname()">开始使用</button>
+            </div>
+        </div>
+
+        <!-- 顶部 -->
+        <div class="header">
+            <div id="greeting">你好，用户</div>
+            <p id="currentPhaseText">当前周期阶段：未记录</p>
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('calendar')">经期记录</div>
+                <div class="tab" onclick="showTab('ai')">AI助手</div>
+                <div class="tab" onclick="showTab('exercise')">运动库</div>
+                <div class="tab" onclick="showTab('shop')">积分商城</div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 经期记录 -->
+            <div id="calendarTab" class="tab-content">
+                <div class="card">
+                    <div class="card-title">我的周期</div>
+                    <div id="currentPhaseDisplay"></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-title">选择经期日期</div>
+                    <div id="calendar"></div>
+                    <div class="period-notice">点击选择经期开始日期，再次点击选择结束日期</div>
+                </div>
+
+                <div class="card privacy-card">
+                    <div class="card-title">隐私保护</div>
+                    <div class="privacy-text">
+                        🌸 您的所有数据（经期记录、积分、API Key）均存储在本地浏览器中，不会上传到任何服务器，保护您的隐私安全。
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI助手 -->
+            <div id="aiTab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card-title">DeepSeek API Key</div>
+                    <input type="text" id="apiKeyInput" class="api-key-input" placeholder="请输入您的 DeepSeek API Key">
+                    <button class="btn btn-primary" style="margin-bottom: 16px;" onclick="saveApiKey()">保存API Key</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">获取运动建议</div>
+                    <select id="phaseSelect" class="phase-select">
+                        <option value="menstrual">月经期</option>
+                        <option value="follicular">卵泡期</option>
+                        <option value="ovulation">排卵期</option>
+                        <option value="luteal">黄体期</option>
+                    </select>
+                    <textarea id="symptomsInput" class="symptoms-input" placeholder="请描述您当前的身体状况或症状（可选）"></textarea>
+                    <button class="btn btn-primary" onclick="getAISuggestion()">获取AI建议</button>
+                    <div id="aiResult"></div>
+                </div>
+            </div>
+
+            <!-- 运动库 -->
+            <div id="exerciseTab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card-title">月经期推荐运动</div>
+                    <div class="exercise-grid" id="menstrualExercises"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">卵泡期推荐运动</div>
+                    <div class="exercise-grid" id="follicularExercises"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">排卵期推荐运动</div>
+                    <div class="exercise-grid" id="ovulationExercises"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">黄体期推荐运动</div>
+                    <div class="exercise-grid" id="lutealExercises"></div>
+                </div>
+            </div>
+
+            <!-- 积分商城 -->
+            <div id="shopTab" class="tab-content" style="display: none;">
+                <div class="points-header">
+                    <div>
+                        <div class="points-balance" id="pointsBalance">0</div>
+                        <div class="points-label">积分余额</div>
+                    </div>
+                    <button id="signBtn" class="sign-btn" onclick="checkIn()">签到 +10分</button>
+                </div>
+                <div class="sign-info" id="signInfo"></div>
+
+                <div class="card">
+                    <div class="card-title">积分商城</div>
+                    <div class="shop-items" id="shopItems"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航 -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="showTab('calendar')">
+                <div class="nav-item-icon">📅</div>
+                <div class="nav-item-text">记录</div>
+            </div>
+            <div class="nav-item" onclick="showTab('ai')">
+                <div class="nav-item-icon">🤖</div>
+                <div class="nav-item-text">AI助手</div>
+            </div>
+            <div class="nav-item" onclick="showTab('exercise')">
+                <div class="nav-item-icon">🏃</div>
+                <div class="nav-item-text">运动库</div>
+            </div>
+            <div class="nav-item" onclick="showTab('shop')">
+                <div class="nav-item-icon">🎁</div>
+                <div class="nav-item-text">商城</div>
+            </div>
+        </div>
+
+        <!-- Toast提示 -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script>
+        // 初始化数据
+        const STORAGE_KEYS = {
+            NICKNAME: 'period_helper_nickname',
+            PERIOD_RECORDS: 'period_helper_periods',
+            API_KEY: 'period_helper_api_key',
+            POINTS: 'period_helper_points',
+            LAST_CHECKIN: 'period_helper_last_checkin',
+            CHECKIN_STREAK: 'period_helper_checkin_streak'
+        };
+
+        // 周期阶段配置
+        const PHASES = {
+            menstrual: { name: '月经期', color: 'phase-menstrual', days: 5, 
+                symptoms: '可能出现腹痛、乏力、情绪波动',
+                suggestion: '建议进行轻度运动，如散步、瑜伽等，避免剧烈运动' },
+            follicular: { name: '卵泡期', color: 'phase-follicular', days: 9,
+                symptoms: '身体逐渐恢复，精力充沛',
+                suggestion: '适合进行中等强度运动，如慢跑、游泳、力量训练' },
+            ovulation: { name: '排卵期', color: 'phase-ovulation', days: 3,
+                symptoms: '体温升高，分泌物增多，性欲增强',
+                suggestion: '可进行高强度运动，如HIIT、球类运动' },
+            luteal: { name: '黄体期', color: 'phase-luteal', days: 12,
+                symptoms: '可能出现乳房胀痛、疲劳、情绪不稳定',
+                suggestion: '保持适度运动，如快走、普拉提、舒缓瑜伽' }
+        };
+
+        // 运动数据
+        const EXERCISES = {
+            menstrual: [
+                { name: '温和瑜伽', desc: '舒缓拉伸，缓解经期不适', icon: '🧘' },
+                { name: '慢走', desc: '促进血液循环，放松身心', icon: '🚶' },
+                { name: '冥想呼吸', desc: '调节情绪，减轻压力', icon: '💆' },
+                { name: '盆底肌训练', desc: '温和锻炼，增强核心', icon: '🏋️' }
+            ],
+            follicular: [
+                { name: '慢跑', desc: '提升心肺功能，增强耐力', icon: '🏃' },
+                { name: '游泳', desc: '全身性运动，低冲击力', icon: '🏊' },
+                { name: '力量训练', desc: '增强肌肉，塑造体型', icon: '💪' },
+                { name: '羽毛球', desc: '提高反应速度，愉悦身心', icon: '🏸' }
+            ],
+            ovulation: [
+                { name: 'HIIT训练', desc: '高效燃脂，提升代谢', icon: '🔥' },
+                { name: '动感单车', desc: '高强度有氧运动', icon: '🚴' },
+                { name: '篮球', desc: '团队运动，增强协作', icon: '🏀' },
+                { name: '跳绳', desc: '快速燃脂，简单有效', icon: '🪀' }
+            ],
+            luteal: [
+                { name: '快走', desc: '保持活力，轻松舒适', icon: '🚶‍♀️' },
+                { name: '普拉提', desc: '核心训练，改善体态', icon: '🧘‍♀️' },
+                { name: '舒缓瑜伽', desc: '放松身心，缓解疲劳', icon: '🌿' },
+                { name: '太极', desc: '缓慢柔和，平衡身心', icon: '☯️' }
+            ]
+        };
+
+        // 商城商品
+        const SHOP_ITEMS = [
+            { id: 1, name: '运动毛巾', price: 100, icon: '🧺' },
+            { id: 2, name: '瑜伽垫', price: 200, icon: '🧘' },
+            { id: 3, name: '运动水杯', price: 150, icon: '🥤' },
+            { id: 4, name: '精美手环', price: 300, icon: '💫' }
+        ];
+
+        // 当前显示的标签页
+        let currentTab = 'calendar';
+        
+        // 日历相关
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let selectedStart = null;
+        let selectedEnd = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+        });
+
+        function initApp() {
+            // 检查是否有昵称
+            const nickname = localStorage.getItem(STORAGE_KEYS.NICKNAME);
+            if (!nickname) {
+                document.getElementById('welcomeModal').style.display = 'flex';
+            } else {
+                document.getElementById('greeting').textContent = `你好，${nickname}`;
+            }
+
+            // 加载API Key
+            const apiKey = localStorage.getItem(STORAGE_KEYS.API_KEY);
+            if (apiKey) {
+                document.getElementById('apiKeyInput').value = apiKey;
+            }
+
+            // 加载积分
+            loadPoints();
+
+            // 加载经期记录并计算当前阶段
+            loadPeriodRecords();
+
+            // 渲染日历
+            renderCalendar();
+
+            // 渲染运动库
+            renderExercises();
+
+            // 渲染商城
+            renderShop();
+
+            // 检查今日是否已签到
+            checkCheckInStatus();
+        }
+
+        // 保存昵称
+        function saveNickname() {
+            const nickname = document.getElementById('nicknameInput').value.trim();
+            if (!nickname) {
+                showToast('请输入昵称');
+                return;
+            }
+            localStorage.setItem(STORAGE_KEYS.NICKNAME, nickname);
+            document.getElementById('greeting').textContent = `你好，${nickname}`;
+            document.getElementById('welcomeModal').style.display = 'none';
+            showToast('欢迎使用经期运动助手！');
+        }
+
+        // 显示标签页
+        function showTab(tab) {
+            currentTab = tab;
+            
+            // 更新标签样式
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.querySelector(`.tab:nth-child(${getTabIndex(tab) + 1})`).classList.add('active');
+            document.querySelectorAll('.nav-item')[getTabIndex(tab)].classList.add('active');
+
+            // 显示对应内容
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            document.getElementById(`${tab}Tab`).style.display = 'block';
+
+            // 如果是AI助手页面，自动选择当前周期阶段
+            if (tab === 'ai') {
+                updatePhaseSelect();
+            }
+        }
+
+        function getTabIndex(tab) {
+            const tabs = ['calendar', 'ai', 'exercise', 'shop'];
+            return tabs.indexOf(tab);
+        }
+
+        // 加载经期记录
+        function loadPeriodRecords() {
+            const records = localStorage.getItem(STORAGE_KEYS.PERIOD_RECORDS);
+            if (records) {
+                const periodRecords = JSON.parse(records);
+                if (periodRecords.length > 0) {
+                    const latestPeriod = periodRecords[periodRecords.length - 1];
+                    calculateCurrentPhase(latestPeriod.start, latestPeriod.end);
+                }
+            }
+        }
+
+        // 计算当前周期阶段
+        function calculateCurrentPhase(startStr, endStr) {
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // 计算周期长度（假设28天）
+            const cycleLength = 28;
+            
+            // 计算从经期开始到今天的天数
+            const diffTime = today.getTime() - start.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            let currentPhase = null;
+            let daysInPhase = 0;
+            let daysRemaining = 0;
+
+            if (diffDays < 0) {
+                // 还没到经期开始
+                const daysUntil = Math.abs(diffDays);
+                if (daysUntil <= PHASES.luteal.days) {
+                    currentPhase = 'luteal';
+                    daysInPhase = PHASES.luteal.days - daysUntil;
+                    daysRemaining = daysUntil;
+                } else if (daysUntil <= PHASES.luteal.days + PHASES.ovulation.days) {
+                    currentPhase = 'ovulation';
+                    daysInPhase = PHASES.ovulation.days - (daysUntil - PHASES.luteal.days);
+                    daysRemaining = daysUntil - PHASES.luteal.days;
+                } else if (daysUntil <= PHASES.luteal.days + PHASES.ovulation.days + PHASES.follicular.days) {
+                    currentPhase = 'follicular';
+                    daysInPhase = PHASES.follicular.days - (daysUntil - PHASES.luteal.days - PHASES.ovulation.days);
+                    daysRemaining = daysUntil - PHASES.luteal.days - PHASES.ovulation.days;
+                } else {
+                    currentPhase = 'menstrual';
+                    daysInPhase = 0;
+                    daysRemaining = daysUntil - cycleLength + PHASES.menstrual.days;
+                }
+            } else {
+                // 经期开始后
+                let remainingDays = diffDays;
+                
+                if (remainingDays < PHASES.menstrual.days) {
+                    currentPhase = 'menstrual';
+                    daysInPhase = remainingDays;
+                    daysRemaining = PHASES.menstrual.days - remainingDays;
+                } else {
+                    remainingDays -= PHASES.menstrual.days;
+                    
+                    if (remainingDays < PHASES.follicular.days) {
+                        currentPhase = 'follicular';
+                        daysInPhase = remainingDays;
+                        daysRemaining = PHASES.follicular.days - remainingDays;
+                    } else {
+                        remainingDays -= PHASES.follicular.days;
+                        
+                        if (remainingDays < PHASES.ovulation.days) {
+                            currentPhase = 'ovulation';
+                            daysInPhase = remainingDays;
+                            daysRemaining = PHASES.ovulation.days - remainingDays;
+                        } else {
+                            remainingDays -= PHASES.ovulation.days;
+                            
+                            if (remainingDays < PHASES.luteal.days) {
+                                currentPhase = 'luteal';
+                                daysInPhase = remainingDays;
+                                daysRemaining = PHASES.luteal.days - remainingDays;
+                            } else {
+                                // 进入下一个周期
+                                const daysIntoNewCycle = remainingDays - PHASES.luteal.days;
+                                if (daysIntoNewCycle < PHASES.menstrual.days) {
+                                    currentPhase = 'menstrual';
+                                    daysInPhase = daysIntoNewCycle;
+                                    daysRemaining = PHASES.menstrual.days - daysIntoNewCycle;
+                                } else {
+                                    currentPhase = 'follicular';
+                                    daysInPhase = daysIntoNewCycle - PHASES.menstrual.days;
+                                    daysRemaining = PHASES.follicular.days - daysInPhase;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (currentPhase) {
+                displayCurrentPhase(currentPhase, daysInPhase, daysRemaining);
+            }
+        }
+
+        // 显示当前周期阶段
+        function displayCurrentPhase(phase, daysInPhase, daysRemaining) {
+            const phaseInfo = PHASES[phase];
+            const display = document.getElementById('currentPhaseDisplay');
+            const text = document.getElementById('currentPhaseText');
+            
+            display.innerHTML = `
+                <div class="phase-badge ${phaseInfo.color}">${phaseInfo.name}</div>
+                <div class="phase-info">
+                    <p><strong>当前阶段：</strong>${phaseInfo.name}</p>
+                    <p><strong>典型症状：</strong>${phaseInfo.symptoms}</p>
+                    <p><strong>运动建议：</strong>${phaseInfo.suggestion}</p>
+                    <p><strong>进度：</strong>第 ${daysInPhase + 1} 天 / 共 ${phaseInfo.days} 天（剩余 ${daysRemaining} 天）</p>
+                </div>
+            `;
+            
+            text.textContent = `当前周期阶段：${phaseInfo.name}`;
+        }
+
+        // 渲染日历
+        function renderCalendar() {
+            const calendar = document.getElementById('calendar');
+            
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const startDay = firstDay.getDay();
+            const daysInMonth = lastDay.getDate();
+            
+            // 获取上个月最后几天
+            const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+            const prevMonthDays = [];
+            for (let i = startDay - 1; i >= 0; i--) {
+                prevMonthDays.push(prevMonthLastDay - i);
+            }
+
+            // 获取下个月开头几天
+            const totalCells = prevMonthDays.length + daysInMonth;
+            const nextMonthDays = [];
+            if (totalCells % 7 !== 0) {
+                const needed = 7 - (totalCells % 7);
+                for (let i = 1; i <= needed; i++) {
+                    nextMonthDays.push(i);
+                }
+            }
+
+            // 构建日历HTML
+            let html = `
+                <div class="calendar-header">
+                    <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                    <span class="calendar-month">${currentYear}年${currentMonth + 1}月</span>
+                    <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                </div>
+                <div class="calendar-weekdays">
+                    <div class="weekday">日</div>
+                    <div class="weekday">一</div>
+                    <div class="weekday">二</div>
+                    <div class="weekday">三</div>
+                    <div class="weekday">四</div>
+                    <div class="weekday">五</div>
+                    <div class="weekday">六</div>
+                </div>
+                <div class="calendar-days">
+            `;
+
+            // 上个月的日期
+            prevMonthDays.forEach(day => {
+                html += `<div class="day other-month" data-date="${formatDate(currentMonth === 0 ? currentYear - 1 : currentYear, currentMonth === 0 ? 11 : currentMonth - 1, day)}">${day}</div>`;
+            });
+
+            // 本月的日期
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentYear, currentMonth, day);
+                date.setHours(0, 0, 0, 0);
+                const dateStr = formatDate(currentYear, currentMonth, day);
+                const isToday = date.getTime() === today.getTime();
+                
+                let classes = 'day';
+                if (isToday) classes += ' today';
+                
+                // 检查是否在选中范围内
+                if (selectedStart && selectedEnd) {
+                    const start = new Date(selectedStart);
+                    const end = new Date(selectedEnd);
+                    if (date >= start && date <= end) {
+                        if (date.getTime() === start.getTime()) classes += ' selected range-start';
+                        else if (date.getTime() === end.getTime()) classes += ' selected range-end';
+                        else classes += ' in-range';
+                    }
+                }
+                
+                html += `<div class="${classes}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">${day}</div>`;
+            }
+
+            // 下个月的日期
+            nextMonthDays.forEach(day => {
+                html += `<div class="day other-month" data-date="${formatDate(currentMonth === 11 ? currentYear + 1 : currentYear, currentMonth === 11 ? 0 : currentMonth + 1, day)}">${day}</div>`;
+            });
+
+            html += '</div>';
+            calendar.innerHTML = html;
+        }
+
+        function formatDate(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        function selectDate(dateStr) {
+            if (!selectedStart) {
+                selectedStart = dateStr;
+            } else if (!selectedEnd) {
+                // 确保结束日期大于开始日期
+                if (dateStr > selectedStart) {
+                    selectedEnd = dateStr;
+                } else {
+                    selectedEnd = selectedStart;
+                    selectedStart = dateStr;
+                }
+                
+                // 保存记录
+                savePeriodRecord(selectedStart, selectedEnd);
+            } else {
+                // 重置选择
+                selectedStart = dateStr;
+                selectedEnd = null;
+            }
+            renderCalendar();
+        }
+
+        function savePeriodRecord(start, end) {
+            const records = localStorage.getItem(STORAGE_KEYS.PERIOD_RECORDS);
+            const periodRecords = records ? JSON.parse(records) : [];
+            
+            periodRecords.push({ start, end, date: new Date().toISOString() });
+            localStorage.setItem(STORAGE_KEYS.PERIOD_RECORDS, JSON.stringify(periodRecords));
+            
+            // 更新当前阶段显示
+            calculateCurrentPhase(start, end);
+            showToast('经期记录已保存！');
+        }
+
+        // 保存API Key
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showToast('请输入API Key');
+                return;
+            }
+            localStorage.setItem(STORAGE_KEYS.API_KEY, apiKey);
+            showToast('API Key已保存');
+        }
+
+        // 更新阶段选择
+        function updatePhaseSelect() {
+            const phaseDisplay = document.getElementById('currentPhaseDisplay');
+            if (phaseDisplay.innerHTML) {
+                // 从显示中提取当前阶段
+                const phaseBadge = phaseDisplay.querySelector('.phase-badge');
+                if (phaseBadge) {
+                    const phaseName = phaseBadge.textContent;
+                    const phaseKey = Object.keys(PHASES).find(key => PHASES[key].name === phaseName);
+                    if (phaseKey) {
+                        document.getElementById('phaseSelect').value = phaseKey;
+                    }
+                }
+            }
+        }
+
+        // 获取AI建议
+        async function getAISuggestion() {
+            const apiKey = localStorage.getItem(STORAGE_KEYS.API_KEY);
+            if (!apiKey) {
+                showToast('请先填写API Key');
+                return;
+            }
+
+            const phase = document.getElementById('phaseSelect').value;
+            const symptoms = document.getElementById('symptomsInput').value.trim();
+            
+            const phaseInfo = PHASES[phase];
+            const resultDiv = document.getElementById('aiResult');
+            
+            resultDiv.innerHTML = '<div class="loading">正在获取建议...</div>';
+
+            try {
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: [
+                            {
+                                role: 'system',
+                                content: '你是女性经期运动智能助手，根据周期阶段和症状给出安全、科学的运动建议（类型、强度、时长、注意事项），简洁友好。'
+                            },
+                            {
+                                role: 'user',
+                                content: `我现在处于${phaseInfo.name}，${symptoms ? '当前症状：' + symptoms : '身体状况良好'}，请给出运动建议。`
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok && data.choices && data.choices[0] && data.choices[0].message) {
+                    resultDiv.innerHTML = `<div class="ai-result">${data.choices[0].message.content}</div>`;
+                } else {
+                    throw new Error(data.error?.message || '获取建议失败');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error-message">错误：${error.message}</div>`;
+            }
+        }
+
+        // 渲染运动库
+        function renderExercises() {
+            Object.keys(EXERCISES).forEach(phase => {
+                const container = document.getElementById(`${phase}Exercises`);
+                let html = '';
+                EXERCISES[phase].forEach(exercise => {
+                    html += `
+                        <div class="exercise-card">
+                            <div class="exercise-image">
+                                <span style="font-size: 40px;">${exercise.icon}</span>
+                            </div>
+                            <div class="exercise-info">
+                                <div class="exercise-title">${exercise.name}</div>
+                                <div class="exercise-desc">${exercise.desc}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            });
+        }
+
+        // 积分相关
+        function loadPoints() {
+            const points = localStorage.getItem(STORAGE_KEYS.POINTS);
+            document.getElementById('pointsBalance').textContent = points || '0';
+        }
+
+        function checkCheckInStatus() {
+            const lastCheckin = localStorage.getItem(STORAGE_KEYS.LAST_CHECKIN);
+            const today = new Date().toDateString();
+            
+            if (lastCheckin === today) {
+                document.getElementById('signBtn').classList.add('disabled');
+                document.getElementById('signBtn').textContent = '今日已签到';
+                document.getElementById('signBtn').onclick = null;
+            }
+            
+            // 更新连续签到信息
+            const streak = localStorage.getItem(STORAGE_KEYS.CHECKIN_STREAK) || '0';
+            document.getElementById('signInfo').textContent = `连续签到 ${streak} 天（连续7天额外+50分）`;
+        }
+
+        function checkIn() {
+            const today = new Date().toDateString();
+            const lastCheckin = localStorage.getItem(STORAGE_KEYS.LAST_CHECKIN);
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toDateString();
+            
+            // 获取当前积分和连续签到天数
+            let points = parseInt(localStorage.getItem(STORAGE_KEYS.POINTS) || '0');
+            let streak = parseInt(localStorage.getItem(STORAGE_KEYS.CHECKIN_STREAK) || '0');
+            
+            // 检查是否连续签到
+            if (lastCheckin === yesterdayStr) {
+                streak++;
+            } else {
+                streak = 1;
+            }
+            
+            // 计算积分
+            let earned = 10;
+            if (streak >= 7) {
+                earned += 50;
+            }
+            points += earned;
+            
+            // 保存数据
+            localStorage.setItem(STORAGE_KEYS.POINTS, points.toString());
+            localStorage.setItem(STORAGE_KEYS.LAST_CHECKIN, today);
+            localStorage.setItem(STORAGE_KEYS.CHECKIN_STREAK, streak.toString());
+            
+            // 更新UI
+            document.getElementById('pointsBalance').textContent = points;
+            document.getElementById('signBtn').classList.add('disabled');
+            document.getElementById('signBtn').textContent = '今日已签到';
+            document.getElementById('signBtn').onclick = null;
+            document.getElementById('signInfo').textContent = `连续签到 ${streak} 天（连续7天额外+50分）`;
+            
+            showToast(`签到成功！获得 ${earned} 积分`);
+        }
+
+        // 渲染商城
+        function renderShop() {
+            const container = document.getElementById('shopItems');
+            let html = '';
+            SHOP_ITEMS.forEach(item => {
+                const points = parseInt(localStorage.getItem(STORAGE_KEYS.POINTS) || '0');
+                const canBuy = points >= item.price;
+                html += `
+                    <div class="shop-item">
+                        <div class="shop-item-image">
+                            <span style="font-size: 36px;">${item.icon}</span>
+                        </div>
+                        <div class="shop-item-name">${item.name}</div>
+                        <div class="shop-item-price">${item.price} 积分</div>
+                        <button class="buy-btn" ${!canBuy ? 'disabled' : ''} onclick="buyItem(${item.id}, ${item.price})">
+                            ${canBuy ? '兑换' : '积分不足'}
+                        </button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function buyItem(itemId, price) {
+            const points = parseInt(localStorage.getItem(STORAGE_KEYS.POINTS) || '0');
+            if (points < price) {
+                showToast('积分不足');
+                return;
+            }
+            
+            const newPoints = points - price;
+            localStorage.setItem(STORAGE_KEYS.POINTS, newPoints.toString());
+            document.getElementById('pointsBalance').textContent = newPoints;
+            
+            // 更新商城按钮状态
+            renderShop();
+            
+            showToast('兑换成功！');
+        }
+
+        // Toast提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
